@@ -1,0 +1,8 @@
+spring:
+  application:
+    name: builder
+
+pubg:
+  api:
+    base-url: https://api.pubg.com
+    key: ${PUBG_API_KEY}

@@ -1,0 +1,55 @@
+/*
+  SQUAD.AI design tokens.
+  Palette: near-black charcoal/navy ground, neon lime primary accent,
+  cyan secondary accent. Kept restrained — glow is a hairline, not a bloom.
+*/
+:root {
+  color-scheme: dark;
+
+  /* ground */
+  --bg-void: #06090c;
+  --bg-base: #0a0e13;
+  --bg-panel: #0f151c;
+  --bg-panel-raised: #131a22;
+  --bg-inset: #0c1116;
+
+  /* borders */
+  --line-faint: rgba(158, 178, 196, 0.08);
+  --line-subtle: rgba(158, 178, 196, 0.14);
+  --line-strong: rgba(158, 178, 196, 0.26);
+
+  /* text */
+  --text-primary: #e8eef4;
+  --text-secondary: #93a2b4;
+  --text-tertiary: #576174;
+  --text-disabled: #3a4250;
+
+  /* accents */
+  --lime: #a7ff3f;
+  --lime-dim: #7ecb2f;
+  --lime-soft: rgba(167, 255, 63, 0.14);
+  --lime-glow: rgba(167, 255, 63, 0.35);
+
+  --cyan: #45e0e6;
+  --cyan-dim: #2fa3a8;
+  --cyan-soft: rgba(69, 224, 230, 0.12);
+
+  --amber: #ffb238;
+  --amber-soft: rgba(255, 178, 56, 0.14);
+
+  --red: #ff5c5c;
+  --red-soft: rgba(255, 92, 92, 0.14);
+
+  /* type */
+  --font-display: 'Chakra Petch', 'Rajdhani', 'Pretendard Variable', 'Noto Sans KR', sans-serif;
+  --font-sans: 'Inter', 'Pretendard Variable', 'Noto Sans KR', -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', monospace;
+
+  /* layout */
+  --radius-sm: 2px;
+  --radius-md: 3px;
+  --shell-max: 1440px;
+  --header-h: 64px;
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+}
