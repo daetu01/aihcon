@@ -2,6 +2,7 @@ package com.party.builder.pubg.client;
 
 import com.party.builder.pubg.dto.PubgMatchResponse;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import tools.jackson.databind.JsonNode;
@@ -17,6 +18,7 @@ public class PubgMatchClient {
         this.pubgRestClient = pubgRestClient;
     }
 
+    @Cacheable(value = "matches", key = "#matchId")
     public PubgMatchResponse getMatch(String matchId) {
         return pubgRestClient.get()
                 .uri("/shards/steam/matches/{matchId}", matchId)

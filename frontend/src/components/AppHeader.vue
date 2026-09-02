@@ -27,7 +27,7 @@ const navItems = computed(() => {
   return [
     { label: 'HOME', to: '/', enabled: true },
     { label: 'PLAYER ANALYSIS', to: nick ? `/analysis/${nick}` : '/', enabled: !!nick },
-    { label: 'SQUAD BUILDER', to: nick ? `/squad/${nick}` : '/', enabled: !!nick },
+    { label: 'SQUAD BUILDER', to: '/squad', enabled: true },
     { label: 'MATCH HISTORY', to: nick ? `/matches/${nick}` : '/', enabled: !!nick },
   ]
 })

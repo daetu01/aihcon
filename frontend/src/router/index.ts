@@ -18,10 +18,9 @@ const router = createRouter({
       props: true,
     },
     {
-      path: '/squad/:nickname',
+      path: '/squad',
       name: 'squad',
       component: () => import('../views/SquadBuilderView.vue'),
-      props: true,
     },
     {
       path: '/matches/:nickname',

@@ -1,46 +1,43 @@
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
-import { fetchSquadRecommendation } from '../api/pubgApi'
-import type { SquadRecommendation } from '../types/pubg'
-import { usePlayerSession } from '../composables/usePlayerSession'
-import SquadSlot from '../components/SquadSlot.vue'
-import SynergyPanel from '../components/SynergyPanel.vue'
+import { computed, nextTick, ref } from 'vue'
+import { useRoute } from 'vue-router'
+import { analyzeSquad } from '../api/squadApi'
+import type { SquadAnalyzeResponse } from '../types/squad'
+import SquadInputForm from '../components/squad/SquadInputForm.vue'
+import SquadAnalyzingLoader from '../components/squad/SquadAnalyzingLoader.vue'
+import CompatibilityScore from '../components/squad/CompatibilityScore.vue'
+import TeamRadarChart from '../components/squad/TeamRadarChart.vue'
+import PlayerProfileCard from '../components/squad/PlayerProfileCard.vue'
+import StrengthsCard from '../components/squad/StrengthsCard.vue'
+import WeaknessesCard from '../components/squad/WeaknessesCard.vue'
 
-const props = defineProps<{ nickname: string }>()
-const router = useRouter()
-const { setLastNickname } = usePlayerSession()
+const route = useRoute()
 
-const loading = ref(true)
-const recommendation = ref<SquadRecommendation | null>(null)
-const variant = ref(0)
-const deployed = ref(false)
-
-async function load(nickname: string, v: number) {
-  loading.value = true
-  deployed.value = false
-  setLastNickname(nickname)
-  recommendation.value = await fetchSquadRecommendation(nickname, v)
-  loading.value = false
-}
-
-onMounted(() => load(props.nickname, variant.value))
-watch(() => props.nickname, (n) => {
-  variant.value = 0
-  load(n, 0)
+const initialNicknames = computed(() => {
+  const p1 = route.query.p1
+  return typeof p1 === 'string' && p1.trim() ? [p1] : []
 })
 
-function findAnother() {
-  variant.value += 1
-  load(props.nickname, variant.value)
-}
+const loading = ref(false)
+const errorMessage = ref('')
+const result = ref<SquadAnalyzeResponse | null>(null)
+const resultsRef = ref<HTMLElement | null>(null)
 
-function deploy() {
-  deployed.value = true
-}
+async function handleAnalyze(nicknames: string[]) {
+  if (loading.value) return
+  loading.value = true
+  errorMessage.value = ''
+  result.value = null
 
-function goAnalysis() {
-  router.push({ name: 'analysis', params: { nickname: props.nickname } })
+  try {
+    result.value = await analyzeSquad(nicknames)
+    await nextTick()
+    resultsRef.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  } catch (err) {
+    errorMessage.value = err instanceof Error ? err.message : '스쿼드 분석에 실패했습니다. 다시 시도해주세요.'
+  } finally {
+    loading.value = false
+  }
 }
 </script>
 
@@ -48,42 +45,37 @@ function goAnalysis() {
   <div class="builder">
     <div class="builder__inner">
       <div class="builder__head">
-        <div>
-          <span class="kicker">AI SQUAD BUILDER</span>
-          <h1 class="builder__title">4인 스쿼드 편성</h1>
-        </div>
-        <button class="btn btn-ghost" @click="goAnalysis">‹ BACK TO REPORT</button>
+        <span class="kicker">SQUAD.AI // AI SQUAD BUILDER</span>
+        <h1 class="builder__title">AI Squad Builder</h1>
+        <p class="builder__tagline mono">잘하는 사람보다, 잘 맞는 사람.</p>
+        <p class="builder__desc">
+          4명의 PUBG 닉네임을 입력하면 최근 전적 데이터를 분석해 각자의 플레이 성향을 분류하고,
+          네 명이 함께 팀을 이뤘을 때의 스쿼드 궁합을 진단합니다.
+        </p>
       </div>
 
-      <div v-if="loading" class="builder__loading mono">
-        <span class="status-dot status-dot--live"></span>
-        MATCHING COMPATIBLE PLAYERS<span class="caret"></span>
-      </div>
+      <SquadInputForm
+        :loading="loading"
+        :error-message="errorMessage"
+        :initial-nicknames="initialNicknames"
+        @analyze="handleAnalyze"
+      />
 
-      <div v-else-if="recommendation" class="builder__grid">
-        <div class="builder__slots">
-          <div class="builder__net" aria-hidden="true"></div>
-          <SquadSlot
-            v-for="(m, i) in recommendation.members"
-            :key="m.nickname"
-            :index="i + 1"
-            :member="m"
-          />
+      <SquadAnalyzingLoader v-if="loading" />
+
+      <div v-if="result" ref="resultsRef" class="builder__results">
+        <div class="builder__overview">
+          <CompatibilityScore :score="result.compatibilityScore" />
+          <TeamRadarChart :team-profile="result.teamProfile" />
         </div>
 
-        <div class="builder__side">
-          <SynergyPanel :synergy-score="recommendation.synergyScore" :reasons="recommendation.reasons" />
+        <div class="builder__players">
+          <PlayerProfileCard v-for="p in result.players" :key="p.nickname" :player="p" />
+        </div>
 
-          <div class="builder__deploy panel">
-            <p v-if="deployed" class="builder__deploy-msg mono">
-              <span class="status-dot status-dot--live"></span>
-              SQUAD DEPLOYED — INVITES SENT TO 3 PLAYERS
-            </p>
-            <div class="builder__deploy-actions">
-              <button class="btn btn-primary" :disabled="deployed" @click="deploy">DEPLOY SQUAD</button>
-              <button class="btn btn-ghost" @click="findAnother">FIND ANOTHER SQUAD</button>
-            </div>
-          </div>
+        <div class="builder__notes">
+          <StrengthsCard :strengths="result.strengths" />
+          <WeaknessesCard :weaknesses="result.weaknesses" />
         </div>
       </div>
     </div>
@@ -101,102 +93,76 @@ function goAnalysis() {
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 28px;
+  gap: 24px;
 }
 
 .builder__head {
   display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 16px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  max-width: 720px;
 }
 
 .builder__title {
   font-family: var(--font-display);
-  font-size: 30px;
+  font-size: 32px;
   font-weight: 700;
-  margin-top: 6px;
+  margin-top: 4px;
 }
 
-.builder__loading {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 60px 0;
-  justify-content: center;
-  color: var(--cyan);
-  letter-spacing: 0.08em;
-  font-size: 13px;
-}
-
-.builder__grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 340px;
-  gap: 28px;
-  align-items: start;
-}
-
-.builder__slots {
-  position: relative;
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
-}
-
-.builder__net {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background-image:
-    linear-gradient(var(--line-faint) 1px, transparent 1px),
-    linear-gradient(90deg, var(--line-faint) 1px, transparent 1px);
-  background-size: 50% 50%;
-  background-position: center;
-  opacity: 0.6;
-}
-
-.builder__side {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  position: sticky;
-  top: calc(var(--header-h) + 24px);
-}
-
-.builder__deploy {
-  padding: 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.builder__deploy-msg {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 11px;
-  letter-spacing: 0.05em;
+.builder__tagline {
+  font-size: 16px;
+  font-weight: 700;
   color: var(--lime);
 }
 
-.builder__deploy-actions {
+.builder__desc {
+  font-size: 13.5px;
+  line-height: 1.8;
+  color: var(--text-secondary);
+}
+
+.builder__results {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 24px;
+  scroll-margin-top: calc(var(--header-h) + 24px);
+}
+
+.builder__overview {
+  display: grid;
+  grid-template-columns: 320px minmax(0, 1fr);
+  gap: 24px;
+  align-items: stretch;
+}
+
+.builder__players {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+.builder__notes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
 }
 
 @media (max-width: 1100px) {
-  .builder__grid {
+  .builder__overview {
     grid-template-columns: 1fr;
   }
-  .builder__side {
-    position: static;
+  .builder__players {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
 @media (max-width: 640px) {
-  .builder__slots {
+  .builder__players {
+    grid-template-columns: 1fr;
+  }
+  .builder__notes {
     grid-template-columns: 1fr;
   }
 }

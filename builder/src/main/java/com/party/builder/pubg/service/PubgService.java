@@ -93,18 +93,30 @@ public class PubgService {
     ) {
 
         return matchIds.stream()
+                .limit(5)
                 .map(pubgMatchClient::getMatch)
-                .filter(match -> !"airoyale".equals(match.getData()
-                        .getAttributes()
-                        .getMatchType()))
+                .filter(match -> !"airoyale".equals(
+                        match.getData()
+                                .getAttributes()
+                                .getMatchType()
+                ))
                 .map(match -> match.getIncluded()
                         .stream()
-                        .filter(included -> "participant".equals(included.getType()))
+                        .filter(included ->
+                                "participant".equals(included.getType()))
                         .map(PubgMatchResponse.Included::getAttributes)
-                        .filter(attributes -> attributes != null)
+                        .filter(Objects::nonNull)
                         .map(PubgMatchResponse.ParticipantAttributes::getStats)
-                        .filter(stats -> stats != null)
-                        .filter(stats -> accountId.equals(stats.getPlayerId()))
+                        .filter(Objects::nonNull)
+                        .filter(stats ->
+                                accountId.equals(stats.getPlayerId()))
+                        .peek(stats -> {
+                            System.out.println("-------------------");
+                            System.out.println("requested accountId: " + accountId);
+                            System.out.println("playerId: " + stats.getPlayerId());
+                            System.out.println("name: " + stats.getName());
+                            System.out.println("kills: " + stats.getKills());
+                        })
                         .findFirst()
                         .orElse(null))
                 .filter(Objects::nonNull)
@@ -116,21 +128,16 @@ public class PubgService {
         PlayerSummaryResponse player =
                 getPlayerByNickname(nickname);
 
+        List<String> recentMatchIds = player.getMatchIds()
+                .stream()
+                .limit(5)
+                .toList();
+
         List<PubgMatchResponse.Stats> statsList =
                 getRecentPlayerStats(
-                        player.getMatchIds(),
+                        recentMatchIds,
                         player.getAccountId()
                 );
-
-        statsList.forEach(stats -> {
-            System.out.println("-------------------");
-            System.out.println("name: " + stats.getName());
-            System.out.println("kills: " + stats.getKills());
-            System.out.println("damage: " + stats.getDamageDealt());
-            System.out.println("survival: " + stats.getTimeSurvived());
-            System.out.println("winPlace: " + stats.getWinPlace());
-            System.out.println("walk: " + stats.getWalkDistance());
-        });
 
         return aggregateStats(statsList);
     }
@@ -226,16 +233,6 @@ public class PubgService {
                 .build();
     }
 
-    public PlayerStyleProfile getPlayerStyle(String nickname) {
-
-        PlayerAggregateStats aggregateStats =
-                analyzePlayer(nickname);
-
-        return playStyleAnalysisService.analyze(
-                aggregateStats
-        );
-    }
-
     public JsonNode[] getTelemetry(String matchId) {
 
         String telemetryUrl =
@@ -269,7 +266,13 @@ public class PubgService {
 
         PlayerSummaryResponse player = getPlayerByNickname(nickname);
 
-        List<TelemetryFeatures> featuresList = player.getMatchIds().stream()
+        List<String> recentMatchIds = player.getMatchIds()
+                .stream()
+                .limit(5)
+                .toList();
+
+        List<TelemetryFeatures> featuresList = recentMatchIds
+                .stream()
                 .map(pubgMatchClient::getMatch)
                 .filter(match ->
                         !"airoyale".equals(

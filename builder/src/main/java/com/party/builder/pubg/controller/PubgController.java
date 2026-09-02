@@ -4,6 +4,8 @@ package com.party.builder.pubg.controller;
 import com.party.builder.analysis.dto.PlayerStyleProfile;
 import com.party.builder.analysis.dto.TelemetryAggregateStats;
 import com.party.builder.analysis.dto.TelemetryFeatures;
+import com.party.builder.analysis.service.PlayStyleAnalysisService;
+import com.party.builder.analysis.service.PlayerAnalysisFacade;
 import com.party.builder.pubg.dto.PlayerAggregateStats;
 import com.party.builder.pubg.dto.PlayerSummaryResponse;
 import com.party.builder.pubg.dto.PubgMatchResponse;
@@ -24,6 +26,7 @@ import java.util.List;
 public class PubgController {
 
     private final PubgService pubgService;
+    private final PlayerAnalysisFacade playerAnalysisFacade;
 
     @GetMapping("/players/{nickname}")
     public ResponseEntity<PlayerSummaryResponse> getPlayer(
@@ -67,7 +70,7 @@ public class PubgController {
             @PathVariable String nickname
     ) {
         return ResponseEntity.ok(
-                pubgService.getPlayerStyle(nickname)
+                playerAnalysisFacade.analyzePlayerStyle(nickname)
         );
     }
 

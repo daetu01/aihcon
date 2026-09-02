@@ -13,9 +13,14 @@ public class PlayStyleAnalysisService {
             TelemetryAggregateStats telemetry
     ) {
 
-        int killScore = normalize(stats.getAvgKills(), 5.0);
-        int damageScore = normalize(stats.getAvgDamage(), 500.0);
-        int dbnoScore = normalize(stats.getAvgDBNOs(), 4.0);
+        int killScore =
+                normalize(stats.getAvgKills(), 12.0);
+
+        int damageScore =
+                normalize(stats.getAvgDamage(), 1500.0);
+
+        int dbnoScore =
+                normalize(stats.getAvgDBNOs(), 6.0);
 
         int survivalTimeScore =
                 normalize(stats.getAvgSurvivalTime(), 1800.0);
@@ -32,21 +37,24 @@ public class PlayStyleAnalysisService {
         int reviveScore =
                 normalize(stats.getAvgRevives(), 2.0);
 
-        int walkScore =
-                normalize(stats.getAvgWalkDistance(), 4000.0);
+        int walkScore = normalize(
+                stats.getAvgWalkDistance(),
+                6000.0
+        );
 
-        int rideScore =
-                normalize(stats.getAvgRideDistance(), 5000.0);
+        int rideScore = normalize(
+                stats.getAvgRideDistance(),
+                8000.0
+        );
 
         int headshotScore =
                 normalize(stats.getHeadshotRate(), 0.5);
 
-
         int engagementScore =
-                normalize(telemetry.getAvgEngagementCount(), 5.0);
+                normalize(telemetry.getAvgEngagementCount(), 25.0);
 
         int groggyScore =
-                normalize(telemetry.getAvgGroggyCount(), 3.0);
+                normalize(telemetry.getAvgGroggyCount(), 8.0);
 
         int aggression = weightedScore(
                 damageScore, 0.30,
@@ -66,8 +74,8 @@ public class PlayStyleAnalysisService {
         );
 
         int mobility = weightedScore(
-                walkScore, 0.5,
-                rideScore, 0.5
+                walkScore, 0.6,
+                rideScore, 0.4
         );
 
         int combat = weightedScore(
@@ -85,6 +93,31 @@ public class PlayStyleAnalysisService {
                 mobility,
                 combat
         );
+
+
+        System.out.println("===== STYLE DEBUG =====");
+        System.out.println("avgKills = " + stats.getAvgKills());
+        System.out.println("avgDamage = " + stats.getAvgDamage());
+        System.out.println("avgDBNOs = " + stats.getAvgDBNOs());
+
+        System.out.println(
+                "avgEngagement = "
+                        + telemetry.getAvgEngagementCount()
+        );
+
+        System.out.println(
+                "avgGroggy = "
+                        + telemetry.getAvgGroggyCount()
+        );
+
+        System.out.println("killScore = " + killScore);
+        System.out.println("damageScore = " + damageScore);
+        System.out.println("dbnoScore = " + dbnoScore);
+        System.out.println("engagementScore = " + engagementScore);
+        System.out.println("groggyScore = " + groggyScore);
+
+        System.out.println("aggression = " + aggression);
+        System.out.println("combat = " + combat);
 
         return PlayerStyleProfile.builder()
                 .aggression(aggression)
@@ -141,24 +174,39 @@ public class PlayStyleAnalysisService {
             int combat
     ) {
 
-        if (stats.getMatchesAnalyzed() < 10) {
+        if (stats.getMatchesAnalyzed() < 5) {
             return "INSUFFICIENT_DATA";
         }
 
-        if (aggression >= 70 && combat >= 70) {
-            return "ENTRY_FRAGGER";
-        }
+        int maxScore = Math.max(
+                aggression,
+                Math.max(
+                        survival,
+                        Math.max(
+                                support,
+                                Math.max(mobility, combat)
+                        )
+                )
+        );
 
-        if (support >= 65) {
+        if (maxScore == support) {
             return "SUPPORT";
         }
 
-        if (survival >= 75 && aggression < 50) {
+        if (maxScore == mobility) {
+            return "SCOUT";
+        }
+
+        if (maxScore == survival) {
             return "SURVIVOR";
         }
 
-        if (mobility >= 70) {
-            return "SCOUT";
+        if (maxScore == combat) {
+            return "SHARPSHOOTER";
+        }
+
+        if (maxScore == aggression) {
+            return "ENTRY_FRAGGER";
         }
 
         return "FLEX";

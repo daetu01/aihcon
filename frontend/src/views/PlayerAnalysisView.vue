@@ -58,7 +58,7 @@ onMounted(() => load(props.nickname))
 watch(() => props.nickname, (n) => load(n))
 
 function goSquad() {
-  router.push({ name: 'squad', params: { nickname: props.nickname } })
+  router.push({ name: 'squad', query: { p1: props.nickname } })
 }
 function goMatches() {
   router.push({ name: 'matches', params: { nickname: props.nickname } })

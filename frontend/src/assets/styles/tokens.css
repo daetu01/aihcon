@@ -40,6 +40,9 @@
   --red: #ff5c5c;
   --red-soft: rgba(255, 92, 92, 0.14);
 
+  --violet: #b98bff;
+  --violet-soft: rgba(185, 139, 255, 0.14);
+
   /* type */
   --font-display: 'Chakra Petch', 'Rajdhani', 'Pretendard Variable', 'Noto Sans KR', sans-serif;
   --font-sans: 'Inter', 'Pretendard Variable', 'Noto Sans KR', -apple-system, sans-serif;
