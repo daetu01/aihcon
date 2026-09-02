@@ -1,5 +1,6 @@
 package com.party.builder.pubg.client;
 
+import com.party.builder.pubg.dto.PubgPlayerResponse;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
@@ -14,13 +15,13 @@ public class PubgPlayerClient {
         this.pubgRestClient = pubgRestClient;
     }
 
-    public String getPlayerByNickname(String nickname) {
+    public PubgPlayerResponse getPlayerByNickname(String nickname) {
         return pubgRestClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/shards/steam/players")
                         .queryParam("filter[playerNames]", nickname)
                         .build())
                 .retrieve()
-                .body(String.class);
+                .body(PubgPlayerResponse.class);
     }
 }
