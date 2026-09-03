@@ -178,37 +178,47 @@ public class PlayStyleAnalysisService {
             return "INSUFFICIENT_DATA";
         }
 
-        int maxScore = Math.max(
-                aggression,
-                Math.max(
-                        survival,
-                        Math.max(
-                                support,
-                                Math.max(mobility, combat)
-                        )
-                )
-        );
-
-        if (maxScore == support) {
+        if (support >= 60
+                && support >= aggression
+                && support >= survival
+                && support >= mobility
+                && support >= combat) {
             return "SUPPORT";
         }
 
-        if (maxScore == mobility) {
-            return "SCOUT";
-        }
-
-        if (maxScore == survival) {
+        if (survival >= 60
+                && survival >= aggression
+                && survival >= support
+                && survival >= mobility
+                && survival >= combat) {
             return "SURVIVOR";
         }
 
-        if (maxScore == combat) {
+        if (mobility >= 60
+                && mobility >= aggression
+                && mobility >= survival
+                && mobility >= support
+                && mobility >= combat) {
+            return "SCOUT";
+        }
+
+        if (combat >= 60
+                && combat >= aggression
+                && combat >= survival
+                && combat >= support
+                && combat >= mobility) {
             return "SHARPSHOOTER";
         }
 
-        if (maxScore == aggression) {
+        if (aggression >= 60
+                && aggression >= survival
+                && aggression >= support
+                && aggression >= mobility
+                && aggression >= combat) {
             return "ENTRY_FRAGGER";
         }
 
         return "FLEX";
+
     }
 }

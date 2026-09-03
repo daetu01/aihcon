@@ -47,36 +47,26 @@ public class SquadMatchingService {
 
         SquadMatchResponse.TeamProfile teamProfile =
                 SquadMatchResponse.TeamProfile.builder()
-                        .aggression(
-                                profiles.stream()
-                                        .mapToInt(PlayerStyleProfile::getAggression)
-                                        .max()
-                                        .orElse(0)
-                        )
-                        .survival(
-                                profiles.stream()
-                                        .mapToInt(PlayerStyleProfile::getSurvival)
-                                        .max()
-                                        .orElse(0)
-                        )
-                        .support(
-                                profiles.stream()
-                                        .mapToInt(PlayerStyleProfile::getSupport)
-                                        .max()
-                                        .orElse(0)
-                        )
-                        .mobility(
-                                profiles.stream()
-                                        .mapToInt(PlayerStyleProfile::getMobility)
-                                        .max()
-                                        .orElse(0)
-                        )
-                        .combat(
-                                profiles.stream()
-                                        .mapToInt(PlayerStyleProfile::getCombat)
-                                        .max()
-                                        .orElse(0)
-                        )
+                        .aggression((int) profiles.stream()
+                                .mapToInt(PlayerStyleProfile::getAggression)
+                                .average()
+                                .orElse(0))
+                        .survival((int) profiles.stream()
+                                .mapToInt(PlayerStyleProfile::getSurvival)
+                                .average()
+                                .orElse(0))
+                        .support((int) profiles.stream()
+                                .mapToInt(PlayerStyleProfile::getSupport)
+                                .average()
+                                .orElse(0))
+                        .mobility((int) profiles.stream()
+                                .mapToInt(PlayerStyleProfile::getMobility)
+                                .average()
+                                .orElse(0))
+                        .combat((int) profiles.stream()
+                                .mapToInt(PlayerStyleProfile::getCombat)
+                                .average()
+                                .orElse(0))
                         .build();
 
         return SquadMatchResponse.builder()
@@ -151,31 +141,45 @@ public class SquadMatchingService {
 
         List<String> strengths = new ArrayList<>();
 
-        Set<String> styles = new HashSet<>();
+        double avgAggression = profiles.stream()
+                .mapToInt(PlayerStyleProfile::getAggression)
+                .average()
+                .orElse(0);
 
-        for (PlayerStyleProfile profile : profiles) {
-            styles.add(profile.getPlayStyle());
+        double avgSurvival = profiles.stream()
+                .mapToInt(PlayerStyleProfile::getSurvival)
+                .average()
+                .orElse(0);
+
+        double avgSupport = profiles.stream()
+                .mapToInt(PlayerStyleProfile::getSupport)
+                .average()
+                .orElse(0);
+
+        double avgMobility = profiles.stream()
+                .mapToInt(PlayerStyleProfile::getMobility)
+                .average()
+                .orElse(0);
+
+        double avgCombat = profiles.stream()
+                .mapToInt(PlayerStyleProfile::getCombat)
+                .average()
+                .orElse(0);
+
+        if (avgAggression >= 60 && avgCombat >= 60) {
+            strengths.add("팀 전체의 교전 능력이 좋습니다.");
         }
 
-        if (styles.size() >= 3) {
-            strengths.add("서로 다른 플레이 스타일이 잘 조합되어 있습니다.");
+        if (avgSupport >= 60) {
+            strengths.add("팀원 간 지원 능력이 좋습니다.");
         }
 
-        if (styles.contains("ENTRY_FRAGGER")
-                && styles.contains("SUPPORT")) {
-            strengths.add("공격과 지원 역할의 균형이 좋습니다.");
-        }
-
-        if (styles.contains("SURVIVOR")) {
+        if (avgSurvival >= 60) {
             strengths.add("팀의 생존 안정성이 높습니다.");
         }
 
-        if (styles.contains("SCOUT")) {
-            strengths.add("정찰 및 이동 역할을 수행할 수 있습니다.");
-        }
-
-        if (styles.contains("SHARPSHOOTER")) {
-            strengths.add("안정적인 교전 화력을 기대할 수 있습니다.");
+        if (avgMobility >= 60) {
+            strengths.add("팀의 이동 및 포지셔닝 능력이 좋습니다.");
         }
 
         return strengths;
@@ -187,26 +191,49 @@ public class SquadMatchingService {
 
         List<String> weaknesses = new ArrayList<>();
 
-        Set<String> styles = new HashSet<>();
+        double avgAggression = profiles.stream()
+                .mapToInt(PlayerStyleProfile::getAggression)
+                .average()
+                .orElse(0);
 
-        for (PlayerStyleProfile profile : profiles) {
-            styles.add(profile.getPlayStyle());
+        double avgSurvival = profiles.stream()
+                .mapToInt(PlayerStyleProfile::getSurvival)
+                .average()
+                .orElse(0);
+
+        double avgSupport = profiles.stream()
+                .mapToInt(PlayerStyleProfile::getSupport)
+                .average()
+                .orElse(0);
+
+        double avgMobility = profiles.stream()
+                .mapToInt(PlayerStyleProfile::getMobility)
+                .average()
+                .orElse(0);
+
+        double avgCombat = profiles.stream()
+                .mapToInt(PlayerStyleProfile::getCombat)
+                .average()
+                .orElse(0);
+
+        if (avgAggression < 40) {
+            weaknesses.add("적극적으로 교전을 여는 능력이 부족합니다.");
         }
 
-        if (!styles.contains("ENTRY_FRAGGER")) {
-            weaknesses.add("적극적으로 교전을 여는 역할이 부족합니다.");
+        if (avgCombat < 40) {
+            weaknesses.add("전반적인 교전 화력이 부족합니다.");
         }
 
-        if (!styles.contains("SUPPORT")) {
+        if (avgSupport < 40) {
             weaknesses.add("지원 역할이 부족합니다.");
         }
 
-        if (!styles.contains("SURVIVOR")) {
-            weaknesses.add("생존 안정성이 부족할 수 있습니다.");
+        if (avgSurvival < 40) {
+            weaknesses.add("전체적인 생존 안정성이 낮습니다.");
         }
 
-        if (!styles.contains("SCOUT")) {
-            weaknesses.add("정찰 및 이동 역할이 부족할 수 있습니다.");
+        if (avgMobility < 40) {
+            weaknesses.add("이동 및 포지셔닝 능력이 부족할 수 있습니다.");
         }
 
         return weaknesses;
